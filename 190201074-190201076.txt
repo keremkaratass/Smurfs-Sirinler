@@ -1,0 +1,1055 @@
+//Main.java
+
+
+import java.awt.HeadlessException;
+import java.io.IOException;
+import javax.swing.JFrame;
+
+
+public class Main {
+    
+   
+    
+    public static void main(String[] args) throws IOException {
+        SmurfGame ekran = new SmurfGame();
+        
+        
+    }
+    
+}
+
+//SmurfGame.java
+
+
+
+import static com.sun.webkit.graphics.WCImage.getImage;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import javax.swing.JFrame;
+import java.io.*;
+import static java.lang.Math.random;
+import java.util.Arrays;
+import java.util.Random;
+import javax.imageio.ImageIO;
+import javax.imageio.stream.FileImageInputStream;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.Timer;
+
+public class SmurfGame extends JFrame implements KeyListener, ActionListener {
+
+    Timer timer = new Timer(10, this);
+    Image sirine;
+    JButton[][] btndizi;
+    Oyuncu oyuncu;
+    int delayaltin = 0, delayaltin2 = 0, delaymantar = 0, delaymantar2 = 0;
+    Random random = new Random();
+    Altin altin = new Altin();
+    Mantar mantar = new Mantar();
+    Azman azman;
+    Gargamel gargamel;
+    DijkstraAlgorithm t;
+    DijkstraAlgorithm t2;
+    Lokasyon lokasyon = new Lokasyon();
+    Fonksiyonlar fonksiyonlar;
+    int n = 0;
+    int gx,gy,ax,ay;
+
+    public SmurfGame() throws IOException {
+
+        this.setResizable(false);
+        this.setFocusable(true);
+        this.setSize(13 * 70, 11 * 70 + 25);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setVisible(true);
+        this.setBackground(Color.yellow);
+        this.addKeyListener(this);
+
+        fonksiyonlar = new Fonksiyonlar();
+        int[][] mapdizi = fonksiyonlar.txtokuma();
+        String[] satir = fonksiyonlar.secondtxtokuma();
+        btndizi = fonksiyonlar.mapOlustur(mapdizi);
+
+        for (int i = 0; i < 13; i++) {
+            for (int j = 0; j < 11; j++) {
+
+                this.add(btndizi[i][j]);
+
+            }
+        }
+
+        
+        sirine = new ImageIcon(("sirine.png")).getImage().getScaledInstance(70, 70, 0);
+        btndizi[12][7].setIcon(new ImageIcon(sirine));
+        oyuncu = new TembelSirin("Tembel sirin", "tembel");
+        
+        System.out.println(oyuncu.getOyuncuAdi());
+        timer.start();
+
+        btndizi[oyuncu.x][oyuncu.y].setIcon(new ImageIcon(oyuncu.img));
+        btndizi[11][1].setText("" + oyuncu.skor);
+
+        if (satir[0].contains("Gargamel")) {
+            gargamel = new Gargamel("Gargamel", "Düşman");
+            int last = satir[0].length() - 1;
+            char result = satir[0].charAt(last);
+            if (result == 'A' || result == 'D') {
+                if (result == 'A') {
+                    btndizi[gargamel.x][gargamel.y].setIcon(new ImageIcon(gargamel.img));
+                    gx=gargamel.x;
+                    gy=gargamel.y;
+                    lokasyon.setGargamelx(gargamel.x);
+                    lokasyon.setGargamely(gargamel.y);
+                }
+                if (result == 'D') {
+                    gx=gargamel.x4;
+                    gy=gargamel.y4;
+                    btndizi[gargamel.x4][gargamel.y4].setIcon(new ImageIcon(gargamel.img));
+                    lokasyon.setGargamelx(gargamel.x4);
+                    lokasyon.setGargamely(gargamel.y4);
+                }
+            }
+        }
+
+        if (satir[1].contains("Azman")) {
+            azman = new Azman("Azman", "Düşman");
+            int last = satir[1].length() - 1;
+            char result = satir[1].charAt(last);
+            if (result == 'A' || result == 'B' || result == 'C' || result == 'D') {
+                if (result == 'A') {
+                    ax=azman.x;
+                    ay=azman.y;
+                    btndizi[azman.x][azman.y].setIcon(new ImageIcon(azman.img));
+                    lokasyon.setAzmanx(azman.x);
+                    lokasyon.setAzmany(azman.y);
+                }
+                if (result == 'B') {
+                    ax=azman.x2;
+                    ay=azman.y2;
+                    btndizi[azman.x2][azman.y2].setIcon(new ImageIcon(azman.img));
+                    lokasyon.setAzmanx(azman.x2);
+                    lokasyon.setAzmany(azman.y2);
+                }
+                if (result == 'C') {
+                    ax=azman.x3;
+                    ay=azman.y3;
+                    btndizi[azman.x3][azman.y3].setIcon(new ImageIcon(azman.img));
+                    lokasyon.setAzmanx(azman.x3);
+                    lokasyon.setAzmany(azman.y3);
+                }
+                if (result == 'D') {
+                    ax=azman.x4;
+                    ay=azman.y4;
+                    btndizi[azman.x4][azman.y4].setIcon(new ImageIcon(azman.img));
+                    lokasyon.setAzmanx(azman.x4);
+                    lokasyon.setAzmany(azman.y4);
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+
+    }
+
+    @Override
+    public void repaint() {
+        super.repaint(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int c = e.getKeyCode();
+
+        if(c == KeyEvent.VK_SPACE){
+            oyuncu = new GozlukluSirin("Gozluklu sirin", "gozluklu");
+        }
+        btndizi[lokasyon.getGargamelx()][lokasyon.getGargamely()].setIcon(null);
+        btndizi[lokasyon.getAzmanx()][lokasyon.getAzmany()].setIcon(null);
+        for (int i = 0; i < 13; i++) {
+            for (int j = 0; j < 11; j++) {
+
+                if (btndizi[i][j].getBackground() == Color.GREEN) {
+                    btndizi[i][j].setBackground(Color.white);
+                }
+                if (btndizi[i][j].getBackground() == Color.YELLOW) {
+                    btndizi[i][j].setBackground(Color.white);
+                }
+                if (btndizi[i][j].getBackground() == Color.ORANGE) {
+                    btndizi[i][j].setBackground(Color.white);
+                }
+            }
+
+        }
+
+        if (c == KeyEvent.VK_LEFT) {
+            if (btndizi[oyuncu.x - 1][oyuncu.y].getBackground() == Color.WHITE && oyuncu.x != 1) {
+                if (btndizi[oyuncu.x - 1][oyuncu.y].getIcon() == altin.imgicon) {
+                    oyuncu.skor += altin.objeskor;
+                }
+                if (btndizi[oyuncu.x - 1][oyuncu.y].getIcon() == mantar.imgicon) {
+                    oyuncu.skor += mantar.objeskor;
+                }
+
+                btndizi[oyuncu.x][oyuncu.y].setIcon(null);
+                btndizi[oyuncu.x - 1][oyuncu.y].setIcon(new ImageIcon(oyuncu.img));
+                oyuncu.x--;
+                if (oyuncu.getOyuncuID() == 2 && btndizi[oyuncu.x - 1][oyuncu.y].getBackground() == Color.WHITE && oyuncu.x != 1) {
+                    if (btndizi[oyuncu.x - 1][oyuncu.y].getIcon() == altin.imgicon) {
+                        oyuncu.skor += altin.objeskor;
+                    }
+                    if (btndizi[oyuncu.x - 1][oyuncu.y].getIcon() == mantar.imgicon) {
+                        oyuncu.skor += mantar.objeskor;
+                    }
+                    btndizi[oyuncu.x][oyuncu.y].setIcon(null);
+                    btndizi[oyuncu.x - 1][oyuncu.y].setIcon(new ImageIcon(oyuncu.img));
+                    oyuncu.x--;
+                }
+            }
+
+        }
+        if (c == KeyEvent.VK_RIGHT) {
+            if (oyuncu.x != 12) {
+                if (btndizi[oyuncu.x + 1][oyuncu.y].getBackground() == Color.WHITE) {
+                    if (btndizi[oyuncu.x + 1][oyuncu.y].getIcon() == altin.imgicon) {
+                        oyuncu.skor += altin.objeskor;
+                    }
+                    if (btndizi[oyuncu.x + 1][oyuncu.y].getIcon() == mantar.imgicon) {
+                        oyuncu.skor += mantar.objeskor;
+                    }
+
+                    btndizi[oyuncu.x][oyuncu.y].setIcon(null);
+                    btndizi[oyuncu.x + 1][oyuncu.y].setIcon(new ImageIcon(oyuncu.img));
+                    oyuncu.x++;
+                    if(oyuncu.x+1!=13){
+                        if (oyuncu.getOyuncuID() == 2 && btndizi[oyuncu.x + 1][oyuncu.y].getBackground() == Color.WHITE ) {
+                        if (btndizi[oyuncu.x + 1][oyuncu.y].getIcon() == altin.imgicon) {
+                            oyuncu.skor += altin.objeskor;
+                        }
+                        if (btndizi[oyuncu.x + 1][oyuncu.y].getIcon() == mantar.imgicon) {
+                            oyuncu.skor += mantar.objeskor;
+                        }
+                        btndizi[oyuncu.x][oyuncu.y].setIcon(null);
+                        btndizi[oyuncu.x + 1][oyuncu.y].setIcon(new ImageIcon(oyuncu.img));
+                        oyuncu.x++;
+                    }
+                    }
+                    
+                }
+
+                if (oyuncu.x == 12) {
+                    JOptionPane.showMessageDialog(this, oyuncu.getOyuncuAdi() + " şirineye ulaşmıştır.Tebrik ederiz:) ) Skor:" + oyuncu.skor);
+                    System.exit(0);
+                }
+            }
+
+        }
+
+        if (c == KeyEvent.VK_UP) {
+            if (btndizi[oyuncu.x][oyuncu.y - 1].getBackground() == Color.WHITE && oyuncu.y != 1) {
+                if (btndizi[oyuncu.x][oyuncu.y - 1].getIcon() == altin.imgicon) {
+                    oyuncu.skor += altin.objeskor;
+                }
+                if (btndizi[oyuncu.x][oyuncu.y - 1].getIcon() == mantar.imgicon) {
+                    oyuncu.skor += mantar.objeskor;
+                }
+                btndizi[oyuncu.x][oyuncu.y].setIcon(null);
+                btndizi[oyuncu.x][oyuncu.y - 1].setIcon(new ImageIcon(oyuncu.img));
+                oyuncu.y--;
+                if (oyuncu.getOyuncuID() == 2 && btndizi[oyuncu.x][oyuncu.y - 1].getBackground() == Color.WHITE && oyuncu.y != 1) {
+                    if (btndizi[oyuncu.x][oyuncu.y - 1].getIcon() == altin.imgicon) {
+                        oyuncu.skor += altin.objeskor;
+                    }
+                    if (btndizi[oyuncu.x][oyuncu.y - 1].getIcon() == mantar.imgicon) {
+                        oyuncu.skor += mantar.objeskor;
+                    }
+                    btndizi[oyuncu.x][oyuncu.y].setIcon(null);
+                    btndizi[oyuncu.x][oyuncu.y - 1].setIcon(new ImageIcon(oyuncu.img));
+                    oyuncu.y--;
+                }
+            }
+
+        }
+
+        if (c == KeyEvent.VK_DOWN) {
+            if (btndizi[oyuncu.x][oyuncu.y + 1].getBackground() == Color.WHITE && oyuncu.y != 9) {
+                if (btndizi[oyuncu.x][oyuncu.y + 1].getIcon() == altin.imgicon) {
+                    oyuncu.skor += altin.objeskor;
+                }
+                if (btndizi[oyuncu.x][oyuncu.y + 1].getIcon() == mantar.imgicon) {
+                    oyuncu.skor += mantar.objeskor;
+                }
+
+                btndizi[oyuncu.x][oyuncu.y].setIcon(null);
+                btndizi[oyuncu.x][oyuncu.y + 1].setIcon(new ImageIcon(oyuncu.img));
+                oyuncu.y++;
+                if (oyuncu.getOyuncuID() == 2 && btndizi[oyuncu.x][oyuncu.y + 1].getBackground() == Color.WHITE && oyuncu.y != 9) {
+                    if (btndizi[oyuncu.x][oyuncu.y + 1].getIcon() == altin.imgicon) {
+                        oyuncu.skor += altin.objeskor;
+                    }
+                    if (btndizi[oyuncu.x][oyuncu.y + 1].getIcon() == mantar.imgicon) {
+                        oyuncu.skor += mantar.objeskor;
+                    }
+
+                    btndizi[oyuncu.x][oyuncu.y].setIcon(null);
+                    btndizi[oyuncu.x][oyuncu.y + 1].setIcon(new ImageIcon(oyuncu.img));
+                    oyuncu.y++;
+                }
+            }
+
+        }
+        
+        
+
+        t = new DijkstraAlgorithm();
+        t.dijkstra(fonksiyonlar.dijkstraMap(btndizi), lokasyon.getGargamelx() + lokasyon.getGargamely() * 13, btndizi);
+
+        t2 = new DijkstraAlgorithm();
+        t2.dijkstra(fonksiyonlar.dijkstraMap(btndizi), lokasyon.getAzmanx() + lokasyon.getAzmany() * 13, btndizi);
+
+        
+        
+         
+        
+        for (int i = 1; i < 24; i++) {
+
+            if (t.getbuttonyol()[oyuncu.x][oyuncu.y][i + 1].getBackground() == Color.white) {
+                t.getbuttonyol()[oyuncu.x][oyuncu.y][i + 1].setBackground(Color.GREEN);
+            } else {
+                t.getbuttonyol()[oyuncu.x][oyuncu.y][i + 1].setBackground(Color.ORANGE);
+            }
+
+            if (t2.getbuttonyol()[oyuncu.x][oyuncu.y][i].getBackground() == Color.white) {
+                t2.getbuttonyol()[oyuncu.x][oyuncu.y][i].setBackground(Color.YELLOW);
+            } else {
+                t2.getbuttonyol()[oyuncu.x][oyuncu.y][i].setBackground(Color.ORANGE);
+            }
+
+        }
+        
+
+        for (int i = 0; i < 13; i++) {
+            for (int j = 0; j < 11; j++) {
+                if (t.getbuttonyol()[oyuncu.x][oyuncu.y][2] == btndizi[i][j]) {
+                    lokasyon.setGargamelx(i);
+                    lokasyon.setGargamely(j);
+                    
+                }
+
+                if (t2.getbuttonyol()[oyuncu.x][oyuncu.y][1] == btndizi[i][j]) {
+                    lokasyon.setAzmanx(i);
+                    lokasyon.setAzmany(j);
+                    
+                }
+               
+                
+
+            }
+
+        }
+        
+        
+        
+        btndizi[0][0].setBackground(Color.DARK_GRAY);
+        
+        
+        
+        if(lokasyon.getGargamelx()==0 && lokasyon.getGargamely()==0){
+           
+            oyuncu.skor-=gargamel.damage;
+            lokasyon.setGargamelx(gx);
+            lokasyon.setGargamely(gy);
+            
+            
+        }
+         if(lokasyon.getAzmanx()==0 && lokasyon.getAzmany()==0){
+            
+            oyuncu.skor-=azman.damage;
+            lokasyon.setAzmanx(ax);
+            lokasyon.setAzmany(ay);
+            
+            
+        }
+        
+            
+        btndizi[lokasyon.getGargamelx()][lokasyon.getGargamely()].setIcon(new ImageIcon(gargamel.img));
+        btndizi[lokasyon.getAzmanx()][lokasyon.getAzmany()].setIcon(new ImageIcon(azman.img));
+        btndizi[11][1].setText("" + oyuncu.skor);
+
+        if (oyuncu.skor <= 0) {
+                    JOptionPane.showMessageDialog(this, oyuncu.getOyuncuAdi() + " öldü :(" );
+                    System.exit(0);
+                }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+
+        delayaltin++;
+        delayaltin2++;
+        delaymantar++;
+        delaymantar2++;
+        if (delayaltin % 500 == 0) {
+            altin.altinOlustur(btndizi);
+            delayaltin = 0;
+
+        }
+
+        if (delaymantar % 1000 == 0) {
+            mantar.mantarOlustur(btndizi);
+            delaymantar = 0;
+        }
+
+        if (delayaltin2 % 1000 == 0) {
+            altin.altinSil(btndizi);
+            delayaltin2 = 0;
+        }
+
+        if (delaymantar2 % 500 == 0 && delaymantar % 1000 != 0) {
+            mantar.mantarSil(btndizi);
+            delaymantar2 = 0;
+        }
+
+        repaint();
+    }
+
+}
+
+
+
+//Fonksiyonlar.java
+
+
+
+import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
+
+public class Fonksiyonlar {
+
+    public int[][] txtokuma() throws IOException {
+        String[] str = new String[13];
+        FileInputStream fStream;
+        try {
+
+            fStream = new FileInputStream("harita.txt");
+            DataInputStream dStream = new DataInputStream(fStream);
+            BufferedReader bReader = new BufferedReader(new InputStreamReader(dStream));
+
+            for (int i = 0; i < 13; i++) {
+
+                str[i] = bReader.readLine();
+
+            }
+
+        } catch (FileNotFoundException ex) {
+            System.out.println("The file is not exist.");
+        }
+
+        String str1 = '\t' + "";
+
+        String[] parts;
+        int[][] a = new int[11][13];
+        for (int i = 2; i < 13; i++) {
+            parts = str[i].split(str1);
+            for (int j = 0; j < 13; j++) {
+
+                a[i - 2][j] = Integer.parseInt(parts[j]);
+
+            }
+
+        }
+
+        return a;
+
+    }
+
+    public JButton[][] mapOlustur(int[][] dizi) {
+
+        JButton[][] btndizi = new JButton[13][11];
+        for (int i = 0; i < 13; i++) {
+            for (int j = 0; j < 11; j++) {
+                btndizi[i][j] = new JButton();
+                btndizi[i][j].setBounds(i * 70, j * 70, 70, 70);
+
+                if (dizi[j][i] == 0) {
+                    btndizi[i][j].setBackground(Color.DARK_GRAY);
+                } else {
+                    btndizi[i][j].setBackground(Color.white);
+                }
+
+            }
+        }
+
+
+        return btndizi;
+    }
+    
+    public int[][] dijkstraMap(JButton[][] btndizi){
+        
+        int map[][]=new int[143][143];
+        int n=0,m=0;
+        for (int i = 0; i < 11; i++) {
+            for (int j = 0; j < 13; j++) {
+                for (int k = 0; k < 11; k++) {
+                    for (int l = 0; l < 13; l++) {
+                       
+                        if((btndizi[j][i].getBackground()==Color.white && btndizi[l][k].getBackground()==Color.white) && (((i-k==1 || i-k==-1)&&(j==l))||((j-l==1||j-l==-1)&&(i==k))))
+                            map[n][m]=1;
+                        else
+                            map[n][m]=0;
+                        
+                        m++;
+                        if(m==143){
+                            n++;
+                            m=0;
+                        }
+                            
+                    }
+                    
+                }
+                
+            }
+            
+        }
+        return map;
+    }
+
+    public String[] secondtxtokuma() throws IOException {
+        String[] str2 = new String[2];
+        FileInputStream fStream;
+        try {
+
+            fStream = new FileInputStream("harita.txt");
+            DataInputStream dStream = new DataInputStream(fStream);
+            BufferedReader bReader = new BufferedReader(new InputStreamReader(dStream));
+
+            for (int i = 0; i<2; i++) {
+
+                str2[i] = bReader.readLine();
+
+            }
+     } catch (FileNotFoundException ex) {
+            System.out.println("The file is not exist.");
+        }
+        
+        return str2;
+
+    }
+
+}
+
+
+//Karakterler.java
+
+
+
+import java.awt.Image;
+
+
+public abstract class Karakterler {
+    private int oyuncuID;
+    private String oyuncuAdi;
+    private String oyuncuTur;
+    int x; int y;
+     Image img;
+
+    public Karakterler(String oyuncuAdi, String oyuncuTur) {
+        
+        this.oyuncuAdi = oyuncuAdi;
+        this.oyuncuTur = oyuncuTur;
+        
+    }
+    
+    
+
+    public int getOyuncuID() {
+        return oyuncuID;
+    }
+
+    public String getOyuncuAdi() {
+        return oyuncuAdi;
+    }
+
+    
+
+    public String getOyuncuTur() {
+        return oyuncuTur;
+    }
+
+    
+    public void setOyuncuID(int oyuncuID) {
+        this.oyuncuID = oyuncuID;
+    }
+
+    public void setOyuncuAdi(String oyuncuAdi) {
+        this.oyuncuAdi = oyuncuAdi;
+    }
+
+   
+
+    public void setOyuncuTur(String oyuncuTur) {
+        this.oyuncuTur = oyuncuTur;
+    }
+    
+    
+    
+    
+}
+
+
+
+//Oyuncu.java
+
+
+
+public class Oyuncu extends Karakterler{
+
+    int skor=20;
+    public Oyuncu(String oyuncuAdi,String oyuncuTur) {
+        super(oyuncuAdi,oyuncuTur);
+        x=6;
+        y=5;
+        skor=20;
+        
+                
+    }
+
+    
+    
+    
+    
+}
+
+
+//GozlukluSirin.java
+
+
+
+import javax.swing.ImageIcon;
+
+
+public class GozlukluSirin extends Oyuncu{
+
+    public GozlukluSirin(String oyuncuAdi, String oyuncuTur){
+        super(oyuncuAdi, oyuncuTur);
+        img= new ImageIcon(("gozluklu.png")).getImage().getScaledInstance(70, 70, 0);
+        this.setOyuncuID(2);
+        
+    }
+    
+}
+
+
+//TembelSirin.java
+
+
+
+import java.awt.Image;
+import javax.swing.ImageIcon;
+
+
+public class TembelSirin extends Oyuncu{
+    
+    
+    
+    
+    public TembelSirin(String oyuncuAdi, String oyuncuTur) {
+        super(oyuncuAdi, oyuncuTur);
+        img= new ImageIcon(("tembel.png")).getImage().getScaledInstance(70, 70, 0);
+        this.setOyuncuID(1);
+    }
+
+    public Image img() {
+        return img;
+    }
+    
+    
+}
+
+
+
+//Dusman.java
+
+
+
+public abstract class Dusman extends Karakterler{
+    
+    int damage;
+    int x2,y2;
+    int x3,y3;
+    int x4,y4;
+  
+    
+    public Dusman(String oyuncuAdi, String oyuncuTur) {
+        super(oyuncuAdi, oyuncuTur);
+        x=3;
+        y=0;
+        x2=10;
+        y2=0;
+        x3=0;
+        y3=5;
+        x4=3;
+        y4=10;
+        
+    }
+    
+}
+
+
+
+//Azman.java
+
+
+
+import javax.swing.ImageIcon;
+
+
+public class Azman extends Dusman{
+    
+    public Azman(String oyuncuAdi, String oyuncuTur) {
+        super(oyuncuAdi, oyuncuTur);
+        img=new ImageIcon("azman.png").getImage().getScaledInstance(70, 70, 0);
+        this.damage=5;
+        this.setOyuncuID(2);
+    }
+    
+}
+
+
+//Gargamel.java
+
+
+
+import javax.swing.ImageIcon;
+
+
+public class Gargamel extends Dusman{
+    
+    public Gargamel(String oyuncuAdi, String oyuncuTur) {
+        super(oyuncuAdi, oyuncuTur);
+        img=new ImageIcon("gargamel.png").getImage().getScaledInstance(70, 70, 0);
+        this.damage=15;
+        this.setOyuncuID(1);
+    }
+    
+    
+}
+
+
+
+//Obje.java
+
+
+
+import java.awt.Image;
+import java.util.Random;
+import javax.swing.ImageIcon;
+
+
+public abstract class Obje {
+    Random random = new Random();
+    Image img;
+    ImageIcon imgicon;
+    int objeskor;
+}
+
+
+//Mantar.java
+
+
+
+import java.awt.Color;
+import java.awt.Image;
+import java.util.Random;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+
+
+public class Mantar extends Obje{
+     
+    
+     
+    
+
+    public Mantar() {
+        img= new ImageIcon(("mantar.jpg")).getImage().getScaledInstance(70, 70, 0);
+        imgicon= new ImageIcon(img);
+        objeskor=50;
+    }
+    
+    
+    
+  public void mantarOlustur(JButton[][] btndizi){
+         for (int i = 0; i < 1; i++) {
+                int mantarx=random.nextInt(12),mantary=random.nextInt(10);
+                
+                if(btndizi[mantarx][mantary].getBackground()==Color.WHITE)
+                btndizi[mantarx][mantary].setIcon(imgicon);
+                else i--;
+           }
+    }
+    
+   public void mantarSil(JButton[][] btndizi){
+        
+        for (int i = 0; i < 12; i++) {
+            for (int j = 0; j < 10; j++) {
+                
+                   if(btndizi[i][j].getIcon()==imgicon){
+                        btndizi[i][j].setIcon(null);
+                        
+                   }                                  
+            }  
+        }
+        
+    }
+
+  
+}
+
+
+
+//Altin.java
+
+
+
+
+import java.awt.Color;
+import java.awt.Image;
+import java.util.Random;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+
+
+public class Altin extends Obje{
+    
+    
+
+    public Altin() {
+        img= new ImageIcon(("gold.jpg")).getImage().getScaledInstance(70, 70, 0);
+        imgicon = new ImageIcon(img);
+        objeskor=5;
+    }
+    
+    
+    
+  public void altinOlustur(JButton[][] btndizi){
+         for (int i = 0; i < 5; i++) {
+                int altinx=random.nextInt(12),altiny=random.nextInt(10);
+                
+                if(btndizi[altinx][altiny].getBackground()==Color.WHITE)
+                btndizi[altinx][altiny].setIcon(imgicon);
+                else i--;
+           }
+    }
+    
+    public void altinSil(JButton[][] btndizi){
+        
+        for (int i = 0; i < 12; i++) {
+            for (int j = 0; j < 10; j++) {
+                
+                   if(btndizi[i][j].getIcon()==imgicon){
+                        btndizi[i][j].setIcon(null);
+                        
+                   }                                  
+            }  
+        }
+        
+    }
+
+    
+}
+
+
+
+//Lokasyon.java
+
+
+
+public class Lokasyon {
+    private int gargamelx,gargamely;
+    private int azmanx, azmany;
+
+    public int getGargamelx() {
+        return gargamelx;
+    }
+
+    public int getGargamely() {
+        return gargamely;
+    }
+
+    public int getAzmanx() {
+        return azmanx;
+    }
+
+    public int getAzmany() {
+        return azmany;
+    }
+
+    public void setGargamelx(int gargamelx) {
+        this.gargamelx = gargamelx;
+    }
+
+    public void setGargamely(int gargamely) {
+        this.gargamely = gargamely;
+    }
+
+    public void setAzmanx(int azmanx) {
+        this.azmanx = azmanx;
+    }
+
+    public void setAzmany(int azmany) {
+        this.azmany = azmany;
+    }
+    
+    
+}
+
+
+
+//DijkstraAlgorithm.java
+
+
+
+import java.io.IOException;
+import javax.swing.JButton;
+
+public class DijkstraAlgorithm {
+
+    static final int V = 143;
+    int yol[][];
+    JButton buttonyol[][][];
+    int n = 0, m = 0;
+    int sayi;
+
+    public JButton[][][] getbuttonyol() {
+        return buttonyol;
+    }
+
+    public DijkstraAlgorithm() {
+
+        yol = new int[V][25];
+        for (int i = 0; i < V; i++) {
+            for (int j = 0; j < 25; j++) {
+
+                yol[i][j] = 0;
+            }
+
+        }
+
+        
+
+    }
+
+  public int minDistance(int dist[], Boolean sptSet[]) {
+        // Initialize min value 
+        int min = Integer.MAX_VALUE, min_index = -1;
+
+        for (int v = 0; v < V; v++) {
+            if (sptSet[v] == false && dist[v] <= min) {
+                min = dist[v];
+                min_index = v;
+            }
+        }
+
+        return min_index;
+    }
+
+  public void dijkstra(int graph[][], int src, JButton[][] btndizi) {
+
+        buttonyol = new JButton[13][11][25];
+        for (int i = 0; i < 13; i++) {
+            for (int j = 0; j < 11; j++) {
+                for (int k = 0; k < 25; k++) {
+
+                    buttonyol[i][j][k] = new JButton();
+                }
+
+            }
+
+        }
+        int dist[] = new int[V]; // kaynaktan i ye olan uzaklık.
+
+        // sptSet[i] eger nokta tamamen incelendiyse true döndürür. 
+        Boolean sptSet[] = new Boolean[V];
+
+        // düğümlere max değer ve false atama. 
+        for (int i = 0; i < V; i++) {
+            dist[i] = Integer.MAX_VALUE;
+            sptSet[i] = false;
+        }
+
+        // kaynagın kendine uzaklıgı her zaman 0dır.
+        dist[src] = 0;
+
+        // kaynaktan her noktaya en kısa yolu bulma
+        for (int count = 0; count < V - 1; count++) {
+            // en kücük maliyeti olan noktayı kaynak olarak belirleme. 
+            src = minDistance(dist, sptSet);
+
+            // kaynak olarak belirlenen noktayı trueya cevirme. 
+            sptSet[src] = true;
+
+            // daha kısa yol bulunursa güncelleme yapma. 
+            for (int v = 0; v < V; v++) {
+                if (!sptSet[v] && graph[src][v] != 0
+                        && dist[src] != Integer.MAX_VALUE && dist[src] + graph[src][v] < dist[v]) {
+                    dist[v] = dist[src] + graph[src][v];
+                    n = 0;
+                    for (int i = 0; i < 25; i++) {
+                        if (yol[src][i] != 0) {
+                            yol[v][i] = yol[src][i];
+                        } else {
+                            yol[v][i] = src;
+                            break;
+                        }
+                    }
+
+                }
+            }
+
+        }
+
+        //buttonyol dizisine dijkstra yolundaki butonları atıyoruz.
+        for (int i = 0; i < V; i++) {
+            n = 0;
+            for (int j = 0; j < 25; j++) {
+                buttonyol[i % 13][i / 13][n] = btndizi[yol[i][j] % 13][yol[i][j] / 13];
+                n++;
+            }
+
+        }
+
+    }
+
+}
+
+
